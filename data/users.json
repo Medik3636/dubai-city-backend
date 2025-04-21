@@ -1,0 +1,12 @@
+{
+  "users": {
+    "123": {
+      "level": 1,
+      "energy": 953,
+      "maxEnergy": 1000,
+      "dubaiCoin": 47,
+      "xp": 0,
+      "taps": 47
+    }
+  }
+}
