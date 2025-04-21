@@ -78,7 +78,7 @@ bot.onText(/\/start/, (msg) => {
         [
           {
             text: "O‘yinni boshlash",
-            web_app: { url: 'https://dubai-city-frontend.onrender.com' }, // To‘g‘ri URL
+            web_app: { url: 'https://dubai-city-frontend.onrender.com' },
           },
         ],
       ],
@@ -86,10 +86,8 @@ bot.onText(/\/start/, (msg) => {
   });
 });
 
-// Botni ishga tushirish
-bot.launch()
-  .then(() => console.log('Bot successfully started'))
-  .catch((err) => console.error('Bot failed to start:', err));
+// Bot ishga tushdi xabari
+console.log('Bot successfully started');
 
 // Serverni ishga tushirish
 app.listen(PORT, () => {
