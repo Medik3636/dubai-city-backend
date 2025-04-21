@@ -7,20 +7,20 @@ require('dotenv').config();
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public')); // Statik fayllarni qaytarish uchun
+app.use(express.static('public'));
 
-// Bot tokenini BotFather’dan olingan token bilan almashtiring
-const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
+// Botni webhook rejimida sozlash
+const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN);
 const PORT = process.env.PORT || 3004;
+const WEBHOOK_URL = `https://dubai-city-backend.onrender.com/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 
 // MongoDB ulanishi
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost/dubai-city', {
   useNewUrlParser: true,
-  // useUnifiedTopology: true o‘chirilgan
 })
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
-  
+
 // User modeli
 const userSchema = new mongoose.Schema({
   userId: String,
@@ -69,6 +69,12 @@ app.post('/api/tap', async (req, res) => {
   }
 });
 
+// Webhook so'rovlarini qabul qilish
+app.post(`/bot${process.env.TELEGRAM_BOT_TOKEN}`, (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200);
+});
+
 // /start buyrug‘i uchun handler
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
@@ -84,6 +90,11 @@ bot.onText(/\/start/, (msg) => {
       ],
     },
   });
+});
+
+// Webhook’ni o‘rnatish
+bot.setWebHook(WEBHOOK_URL).then(() => {
+  console.log(`Webhook set to ${WEBHOOK_URL}`);
 });
 
 // Bot ishga tushdi xabari
