@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 3004;
 // MongoDB ulanishi
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost/dubai-city', {
   useNewUrlParser: true,
-  useUnifiedTopology: true,
+  // useUnifiedTopology: true o‘chirildi, chunki mongoose 6+ da kerak emas
 })
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
