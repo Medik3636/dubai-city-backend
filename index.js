@@ -14,9 +14,7 @@ const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
 const PORT = process.env.PORT || 3004;
 
 // MongoDB ulanishi
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost/dubai-city', {
-  useNewUrlParser: true,
-})
+mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost/dubai-city')
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
