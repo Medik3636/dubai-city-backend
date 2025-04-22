@@ -1,39 +1,22 @@
-const fs = require('fs').promises;
+const fs = require('fs');
 
 async function tap(ctx) {
   const userId = ctx.from.id;
-  const users = JSON.parse(await fs.readFile('./data/users.json'));
+  let users = JSON.parse(fs.readFileSync('./data/users.json'));
 
   if (!users.users[userId]) {
-    users.users[userId] = {
-      level: 1,
-      energy: 1000,
-      maxEnergy: 1000,
-      dubaiCoin: 0,
-      xp: 0,
-      taps: 0,
-    };
+    users.users[userId] = { coins: 0, energy: 1000, level: 1 };
   }
 
-  const user = users.users[userId];
-  if (user.energy < 1) {
-    return ctx.reply('Energiyangiz tugadi! 3 soatdan keyin tiklanadi.');
+  if (users.users[userId].energy > 0) {
+    users.users[userId].coins += users.users[userId].level;
+    users.users[userId].energy -= 1;
+    ctx.reply(`+${users.users[userId].level} DubaiCoin! Qolgan energiya: ${users.users[userId].energy}`);
+  } else {
+    ctx.reply('Energiya tugadi! 3 soatdan keyin tiklanadi.');
   }
 
-  user.taps += 1;
-  user.energy -= 1;
-  user.dubaiCoin += user.level;
-  user.xp += user.taps % 500 === 0 ? 1 : 0;
-
-  if (user.xp >= user.level * 1500) {
-    user.level += 1;
-    user.maxEnergy += 500;
-    user.energy = user.maxEnergy;
-    ctx.reply(`Tabriklaymiz! ${user.level}-darajaga o‘tdingiz! 🎉`);
-  }
-
-  await fs.writeFile('./data/users.json', JSON.stringify(users, null, 2));
-  ctx.reply(`Siz ${user.dubaiCoin} DubaiCoin yig‘dingiz! Energiya: ${user.energy}/${user.maxEnergy}`);
+  fs.writeFileSync('./data/users.json', JSON.stringify(users, null, 2));
 }
 
 module.exports = { tap };
