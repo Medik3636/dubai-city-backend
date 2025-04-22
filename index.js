@@ -5,14 +5,13 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: 'https://dubai-city-frontend.onrender.com' }));
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static('public')); // Statik fayllarni qaytarish uchun
 
-// Botni webhook rejimida sozlash
-const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN);
+// Bot tokenini BotFather’dan olingan token bilan almashtiring
+const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
 const PORT = process.env.PORT || 3004;
-const WEBHOOK_URL = `https://dubai-city-backend.onrender.com/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 
 // MongoDB ulanishi
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost/dubai-city', {
@@ -31,6 +30,7 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', userSchema);
 
+// Asosiy sahifa
 app.get('/', (req, res) => res.send('Bot ishlayapti!'));
 
 // /api/tap endpoint
@@ -53,7 +53,7 @@ app.post('/api/tap', async (req, res) => {
       return res.status(400).json({ error: 'Not enough energy' });
     }
 
-    user.dubaiCoin += 1;
+    user.dubaiCoin += user.level;
     user.energy -= 1;
     if (user.dubaiCoin >= user.level * 100) {
       user.level += 1;
@@ -67,12 +67,6 @@ app.post('/api/tap', async (req, res) => {
     console.error('Error in /api/tap:', error);
     res.status(500).json({ error: 'Server error' });
   }
-});
-
-// Webhook so'rovlarini qabul qilish
-app.post(`/bot${process.env.TELEGRAM_BOT_TOKEN}`, (req, res) => {
-  bot.processUpdate(req.body);
-  res.sendStatus(200);
 });
 
 // /start buyrug‘i uchun handler
@@ -90,11 +84,6 @@ bot.onText(/\/start/, (msg) => {
       ],
     },
   });
-});
-
-// Webhook’ni o‘rnatish
-bot.setWebHook(WEBHOOK_URL).then(() => {
-  console.log(`Webhook set to ${WEBHOOK_URL}`);
 });
 
 // Bot ishga tushdi xabari
