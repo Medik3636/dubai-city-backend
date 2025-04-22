@@ -66,6 +66,13 @@ app.post('/api/tap', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+bot.on('polling_error', (error) => {
+  console.error('Polling error:', error.message);
+  bot.stopPolling().then(() => {
+    console.log('Polling stopped. Restarting...');
+    bot.startPolling();
+  });
+});
 
 // /start buyrug‘i uchun handler
 bot.onText(/\/start/, (msg) => {
