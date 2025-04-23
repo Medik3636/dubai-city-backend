@@ -9,12 +9,14 @@ app.use(cors({ origin: 'https://dubai-city-frontend.onrender.com' }));
 app.use(express.json());
 app.use(express.static('public')); // Statik fayllarni qaytarish uchun
 
-// Bot tokenini BotFather’dan olingan token bilan almashtiring
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
 const PORT = process.env.PORT || 3004;
 
 // MongoDB ulanishi
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost/dubai-city')
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
@@ -36,6 +38,7 @@ app.post('/api/tap', async (req, res) => {
   const { userId } = req.body;
 
   if (!userId) {
+    console.error('userId is missing in /api/tap request');
     return res.status(400).json({ error: 'userId is required' });
   }
 
@@ -43,11 +46,13 @@ app.post('/api/tap', async (req, res) => {
     let user = await User.findOne({ userId });
 
     if (!user) {
+      console.log(`Creating new user with userId: ${userId}`);
       user = new User({ userId });
       await user.save();
     }
 
     if (user.energy <= 0) {
+      console.log(`User ${userId} has no energy`);
       return res.status(400).json({ error: 'Not enough energy' });
     }
 
@@ -57,21 +62,31 @@ app.post('/api/tap', async (req, res) => {
       user.level += 1;
       user.maxEnergy += 100;
       user.energy = user.maxEnergy;
+      console.log(`User ${userId} leveled up to ${user.level}`);
     }
 
     await user.save();
+    console.log(`User ${userId} updated:`, user);
     res.json({ user });
   } catch (error) {
-    console.error('Error in /api/tap:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Error in /api/tap:', error.message);
+    res.status(500).json({ error: 'Server error: ' + error.message });
   }
 });
+
 bot.on('polling_error', (error) => {
   console.error('Polling error:', error.message);
-  bot.stopPolling().then(() => {
-    console.log('Polling stopped. Restarting...');
-    bot.startPolling();
-  });
+  if (error.message.includes('409')) {
+    console.error('Conflict error detected. Stopping bot...');
+    bot.stopPolling();
+  } else {
+    bot.stopPolling().then(() => {
+      console.log('Polling stopped. Restarting after 5 seconds...');
+      setTimeout(() => {
+        bot.startPolling();
+      }, 5000);
+    });
+  }
 });
 
 // /start buyrug‘i uchun handler
